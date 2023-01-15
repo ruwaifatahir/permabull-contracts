@@ -908,6 +908,8 @@ contract PermaBull is Context, IERC20, Ownable {
 
     mapping(address => bool) private _isExcluded;
 
+    mapping(address => uint256) private _sDaily;
+
     address[] private _excluded;
 
     uint256 private constant MAX = ~uint256(0);
