@@ -910,6 +910,10 @@ contract PermaBull is Context, IERC20, Ownable {
 
     mapping(address => bool) private _isExcluded;
 
+    mapping(address => uint256) private _soldToday;
+
+    mapping(address => uint256) private _lastSellTime;
+
     address[] private _excluded;
 
     uint256 private constant MAX = ~uint256(0);
@@ -942,6 +946,7 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _maxTxAmount = 5000 * 10**6 * 10**9;
     uint256 private numTokensSellToAddToLiquidity = 500 * 10**6 * 10**9;
 
+    uint256 public _dailySellLimit = 10;
     address public treasuryAddress;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
@@ -1200,6 +1205,10 @@ contract PermaBull is Context, IERC20, Ownable {
         emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
 
+    function setDailyLimit(uint256 _dailyLimit) public onlyOwner {
+        _dailySellLimit = _dailyLimit;
+    }
+
     function setTreasuryAddress(address _treasuryAddress) public onlyOwner {
         treasuryAddress = _treasuryAddress;
     }
@@ -1368,7 +1377,6 @@ contract PermaBull is Context, IERC20, Ownable {
         address to,
         uint256 amount
     ) private {
-        console.log("IN Transfer()");
         require(from != address(0), "ERC20: transfer from the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
         if (from != owner() && to != owner())
@@ -1376,6 +1384,35 @@ contract PermaBull is Context, IERC20, Ownable {
                 amount <= _maxTxAmount,
                 "Transfer amount exceeds the maxTxAmount."
             );
+
+        //If account is excluded, remove sending limits
+        if (!_isExcludedFromFee[from]) {
+            uint256 lastSellTime = _lastSellTime[from] = block.timestamp;
+
+            // If he last transfered more than 1 day ago, reset the amount sold today
+            if (lastSellTime + 1 days < block.timestamp) {
+                _soldToday[from] = 0;
+            }
+            uint256 userBalance = balanceOf(from);
+            // Calculate amount which caller can send daily
+            uint256 dailySellLimitAmt = userBalance.mul(_dailySellLimit).div(
+                100
+            );
+
+            // Get amount sold today
+            uint256 soldAmt = _soldToday[from];
+
+            console.log(soldAmt);
+
+            // Calculate amount which wants to sell + amount which was sold today
+            uint256 amountAllowedToSell = amount.add(soldAmt);
+            console.log(amountAllowedToSell, dailySellLimitAmt);
+            //Revert if amount which wants to sell + amount which was sold today is greater than daily sell limit amount
+            require(
+                amountAllowedToSell <= dailySellLimitAmt,
+                "You have reached your daily sell limit"
+            );
+        }
 
         // is the token balance of this contract address over the min number of
         // tokens that we need to initiate a swap + liquidity lock?
@@ -1410,6 +1447,10 @@ contract PermaBull is Context, IERC20, Ownable {
 
         //transfer amount, it will take tax, burn, liquidity fee
         _tokenTransfer(from, to, amount, takeFee);
+
+        //Update amount sold today and last sell time
+        _soldToday[from] = amount;
+        _lastSellTime[from] = block.timestamp;
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {

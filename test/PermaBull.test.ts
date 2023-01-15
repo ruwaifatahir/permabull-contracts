@@ -100,4 +100,20 @@ describe("Lock", function () {
       );
     });
   });
+
+  describe("Anti Whale Mechanism", () => {
+    it("should not let user transfer more than 10% a day", async function () {
+      const { permaBull, owner, account1, account2 } = await loadFixture(
+        deployBurnKing
+      );
+
+      const transferAmt = ethers.utils.parseUnits("101", 9);
+
+      await distributeTokens(permaBull);
+
+      await expect(
+        permaBull.connect(account1).transfer(account2.address, transferAmt)
+      ).to.be.revertedWith("You have reached your daily sell limit");
+    });
+  });
 });
