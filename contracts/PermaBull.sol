@@ -896,6 +896,8 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
+import "hardhat/console.sol";
+
 contract PermaBull is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
@@ -929,6 +931,9 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _liquidityFee = 6;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
+    uint256 public _treasuryFee = 1;
+    uint256 private _previousTreasuryFee = _treasuryFee;
+
     uint256 public _burnFee = 3;
     uint256 private _previousBurnFee = _burnFee;
 
@@ -942,6 +947,7 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 private numTokensSellToAddToLiquidity = 500 * 10**6 * 10**9;
 
     uint256 public _dailySellLimit = 1;
+    address public treasuryAddress;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -957,7 +963,7 @@ contract PermaBull is Context, IERC20, Ownable {
         inSwapAndLiquify = false;
     }
 
-    constructor() public {
+    constructor(address _treasuryAddress) public {
         _rOwned[_msgSender()] = _rTotal;
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
@@ -974,6 +980,8 @@ contract PermaBull is Context, IERC20, Ownable {
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
+
+        treasuryAddress = _treasuryAddress;
 
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
@@ -1184,6 +1192,10 @@ contract PermaBull is Context, IERC20, Ownable {
         _burnFee = burnFee;
     }
 
+    function setTreasuryFeePercent(uint256 treasuryFee) external onlyOwner {
+        _treasuryFee = treasuryFee;
+    }
+
     function setMaxTxPercent(uint256 maxTxPercent) external onlyOwner {
         _maxTxAmount = _tTotal.mul(maxTxPercent).div(10**2);
     }
@@ -1195,6 +1207,10 @@ contract PermaBull is Context, IERC20, Ownable {
 
     function setDailyLimit(uint256 _dailyLimit) public onlyOwner {
         _dailySellLimit = _dailyLimit;
+    }
+
+    function setTreasuryAddress(address _treasuryAddress) public onlyOwner {
+        treasuryAddress = _treasuryAddress;
     }
 
     //to recieve ETH from uniswapV2Router when swaping
@@ -1315,21 +1331,29 @@ contract PermaBull is Context, IERC20, Ownable {
     }
 
     function removeAllFee() private {
-        if (_taxFee == 0 && _liquidityFee == 0 && _burnFee == 0) return;
+        if (
+            _taxFee == 0 &&
+            _liquidityFee == 0 &&
+            _burnFee == 0 &&
+            _treasuryFee == 0
+        ) return;
 
         _previousTaxFee = _taxFee;
         _previousLiquidityFee = _liquidityFee;
         _previousBurnFee = _burnFee;
+        _previousTreasuryFee = _treasuryFee;
 
         _taxFee = 0;
         _liquidityFee = 0;
         _burnFee = 0;
+        _treasuryFee = 0;
     }
 
     function restoreAllFee() private {
         _taxFee = _previousTaxFee;
         _liquidityFee = _previousLiquidityFee;
         _burnFee = _previousBurnFee;
+        _treasuryFee = _previousTreasuryFee;
     }
 
     function isExcludedFromFee(address account) public view returns (bool) {
@@ -1353,6 +1377,7 @@ contract PermaBull is Context, IERC20, Ownable {
         address to,
         uint256 amount
     ) private {
+        console.log("IN Transfer()");
         require(from != address(0), "ERC20: transfer from the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
         if (from != owner() && to != owner())
@@ -1491,23 +1516,30 @@ contract PermaBull is Context, IERC20, Ownable {
         if (!takeFee) removeAllFee();
 
         uint256 burnAmt = amount.mul(_burnFee).div(100);
+        uint256 treasuryAmt = amount.mul(_treasuryFee).div(100);
+        uint256 feeAmt = burnAmt.add(treasuryAmt);
+
+        console.log(burnAmt, "burnAmt");
+        console.log(treasuryAmt, "treasuryAmt");
+        console.log(feeAmt, "feeAmt");
 
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
-            _transferFromExcluded(sender, recipient, amount.sub(burnAmt));
+            _transferFromExcluded(sender, recipient, amount.sub(feeAmt));
         } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
-            _transferToExcluded(sender, recipient, amount.sub(burnAmt));
+            _transferToExcluded(sender, recipient, amount.sub(feeAmt));
         } else if (!_isExcluded[sender] && !_isExcluded[recipient]) {
-            _transferStandard(sender, recipient, amount.sub(burnAmt));
+            _transferStandard(sender, recipient, amount.sub(feeAmt));
         } else if (_isExcluded[sender] && _isExcluded[recipient]) {
-            _transferBothExcluded(sender, recipient, amount.sub(burnAmt));
+            _transferBothExcluded(sender, recipient, amount.sub(feeAmt));
         } else {
-            _transferStandard(sender, recipient, amount.sub(burnAmt));
+            _transferStandard(sender, recipient, amount.sub(feeAmt));
         }
 
         _taxFee = 0;
         _liquidityFee = 0;
 
         _transferStandard(sender, address(0), burnAmt);
+        _transferStandard(sender, treasuryAddress, treasuryAmt);
 
         _taxFee = _previousTaxFee;
         _liquidityFee = _previousLiquidityFee;
