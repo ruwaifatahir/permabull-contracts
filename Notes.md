@@ -1,0 +1,1 @@
+Contract owner does not have max transaction limit. Owner can send and receive any amount.
