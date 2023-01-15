@@ -1312,15 +1312,22 @@ contract PermaBull is Context, IERC20, Ownable {
     }
 
     function removeAllFee() private {
-        if (_taxFee == 0 && _liquidityFee == 0 && _burnFee == 0) return;
+        if (
+            _taxFee == 0 &&
+            _liquidityFee == 0 &&
+            _burnFee == 0 &&
+            _treasuryFee == 0
+        ) return;
 
         _previousTaxFee = _taxFee;
         _previousLiquidityFee = _liquidityFee;
         _previousBurnFee = _burnFee;
+        _previousTreasuryFee = _treasuryFee;
 
         _taxFee = 0;
         _liquidityFee = 0;
         _burnFee = 0;
+        _treasuryFee = 0;
     }
 
     function restoreAllFee() private {
