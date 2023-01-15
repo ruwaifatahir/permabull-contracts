@@ -73,5 +73,13 @@ describe("Lock", function () {
       await permaBull.setTreasuryAddress(account1.address);
       expect(await permaBull.treasuryAddress()).to.be.equal(account1.address);
     });
+    it("should reset treasury tax", async function () {
+      const { permaBull, owner, account1, account2 } = await loadFixture(
+        deployBurnKing
+      );
+
+      await permaBull.setTreasuryFeePercent(5);
+      expect(await permaBull._treasuryFee()).to.be.equal(5);
+    });
   });
 });
