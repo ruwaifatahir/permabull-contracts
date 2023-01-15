@@ -896,7 +896,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract BKP is Context, IERC20, Ownable {
+contract PermaBull is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
 
