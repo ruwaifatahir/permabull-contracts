@@ -31,4 +31,8 @@ describe("Lock", function () {
       expect(await permaBull.uniswapV2Router()).to.be.equal(UniswapV2Router);
     });
   });
+
+  describe("Anti Whale Mechanism", () => {
+    it("should not let user transfer more than 10% a day", async function () {});
+  });
 });
