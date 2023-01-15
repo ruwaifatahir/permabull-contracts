@@ -941,7 +941,7 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _maxTxAmount = 5000 * 10**6 * 10**9;
     uint256 private numTokensSellToAddToLiquidity = 500 * 10**6 * 10**9;
 
-    uint256 public dailyLimitPerc = 1;
+    uint256 public _dailySellLimit = 1;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -1357,6 +1357,23 @@ contract PermaBull is Context, IERC20, Ownable {
                 "Transfer amount exceeds the maxTxAmount."
             );
 
+        uint256 lastSellTime = _lastSellTime[from] = block.timestamp;
+
+        // If he last transfered more than 1 day ago, reset the amount sold today
+        if (lastSellTime + 1 days < block.timestamp) {
+            _soldToday[from] = 0;
+        }
+
+        uint256 dailySellLimit = amount.mul(_dailySellLimit).div(100);
+
+        uint256 soldAmt = _soldToday[from];
+
+        uint256 amountAllowedToSell = amount.add(soldAmt);
+
+        require(
+            amountAllowedToSell <= dailySellLimit,
+            "You have reached your daily sell limit"
+        );
         // is the token balance of this contract address over the min number of
         // tokens that we need to initiate a swap + liquidity lock?
         // also, don't get caught in a circular liquidity event.
@@ -1397,9 +1414,9 @@ contract PermaBull is Context, IERC20, Ownable {
         _lastSellTime[from] = block.timestamp;
     }
 
-//    function checkLimit(from) public view returns(uint) {
+    //    function checkLimit(from) public view returns(uint) {
 
-//    }
+    //    }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
