@@ -1466,23 +1466,26 @@ contract PermaBull is Context, IERC20, Ownable {
         if (!takeFee) removeAllFee();
 
         uint256 burnAmt = amount.mul(_burnFee).div(100);
+        uint256 treasuryAmt = amount.mul(_treasuryFee).div(100);
+        uint256 feeAmt = burnAmt.add(treasuryAmt);
 
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
-            _transferFromExcluded(sender, recipient, amount.sub(burnAmt));
+            _transferFromExcluded(sender, recipient, amount.sub(feeAmt));
         } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
-            _transferToExcluded(sender, recipient, amount.sub(burnAmt));
+            _transferToExcluded(sender, recipient, amount.sub(feeAmt));
         } else if (!_isExcluded[sender] && !_isExcluded[recipient]) {
-            _transferStandard(sender, recipient, amount.sub(burnAmt));
+            _transferStandard(sender, recipient, amount.sub(feeAmt));
         } else if (_isExcluded[sender] && _isExcluded[recipient]) {
-            _transferBothExcluded(sender, recipient, amount.sub(burnAmt));
+            _transferBothExcluded(sender, recipient, amount.sub(feeAmt));
         } else {
-            _transferStandard(sender, recipient, amount.sub(burnAmt));
+            _transferStandard(sender, recipient, amount.sub(feeAmt));
         }
 
         _taxFee = 0;
         _liquidityFee = 0;
 
         _transferStandard(sender, address(0), burnAmt);
+        _transferStandard(sender, address(0), treasuryAmt);
 
         _taxFee = _previousTaxFee;
         _liquidityFee = _previousLiquidityFee;
