@@ -1181,6 +1181,10 @@ contract PermaBull is Context, IERC20, Ownable {
         _burnFee = burnFee;
     }
 
+    function setTreasuryFeePercent(uint256 treasuryFee) external onlyOwner {
+        _treasuryFee = treasuryFee;
+    }
+
     function setMaxTxPercent(uint256 maxTxPercent) external onlyOwner {
         _maxTxAmount = _tTotal.mul(maxTxPercent).div(10**2);
     }
