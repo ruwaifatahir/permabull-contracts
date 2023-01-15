@@ -1364,12 +1364,16 @@ contract PermaBull is Context, IERC20, Ownable {
             _soldToday[from] = 0;
         }
 
+        // Calculate amount which caller can send daily
         uint256 dailySellLimitAmt = amount.mul(_dailySellLimit).div(100);
 
+        // Get amount sold today
         uint256 soldAmt = _soldToday[from];
 
+        // Calculate amount which wants to sell + amount which was sold today
         uint256 amountAllowedToSell = amount.add(soldAmt);
 
+        //Revert if amount which wants to sell + amount which was sold today is greater than daily sell limit amount
         require(
             amountAllowedToSell <= dailySellLimitAmt,
             "You have reached your daily sell limit"
@@ -1408,15 +1412,10 @@ contract PermaBull is Context, IERC20, Ownable {
         //transfer amount, it will take tax, burn, liquidity fee
         _tokenTransfer(from, to, amount, takeFee);
 
-        //Update
-
+        //Update amount sold today and last sell time
         _soldToday[from] = amount;
         _lastSellTime[from] = block.timestamp;
     }
-
-    //    function checkLimit(from) public view returns(uint) {
-
-    //    }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
