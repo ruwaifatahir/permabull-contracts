@@ -80,6 +80,24 @@ describe("Lock", function () {
 
       await permaBull.setTreasuryFeePercent(5);
       expect(await permaBull._treasuryFee()).to.be.equal(5);
+
+      const transferAmt = ethers.utils.parseUnits("100", 9);
+
+      await distributeTokens(permaBull);
+
+      await permaBull.connect(account1).transfer(account2.address, transferAmt);
+      const treasuryBalance = await permaBull.balanceOf(
+        await permaBull.treasuryAddress()
+      );
+      console.log(ethers.utils.formatUnits(treasuryBalance, 9), "treasuryTax");
+
+      const account2Balance = await permaBull.balanceOf(await account2.address);
+
+      console.log(account2Balance);
+
+      expect(treasuryBalance).to.be.equal(
+        transferAmt.mul(await permaBull._treasuryFee()).div(100)
+      );
     });
   });
 });
