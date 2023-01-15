@@ -1193,6 +1193,10 @@ contract PermaBull is Context, IERC20, Ownable {
         emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
 
+    function setDailyLimit(uint256 _dailyLimit) public onlyOwner {
+        _dailySellLimit = _dailyLimit;
+    }
+
     //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
 
