@@ -61,9 +61,17 @@ describe("Lock", function () {
 
       const account2Balance = await permaBull.balanceOf(await account2.address);
       console.log(account2Balance);
-      // expect(treasuryBalance).to.be.equal(
-      //   transferAmt.mul(await permaBull._treasuryFee()).div(100)
-      // );
+      expect(treasuryBalance).to.be.equal(
+        transferAmt.mul(await permaBull._treasuryFee()).div(100)
+      );
+    });
+    it("should reset treasury address", async function () {
+      const { permaBull, owner, account1, account2 } = await loadFixture(
+        deployBurnKing
+      );
+
+      await permaBull.setTreasuryAddress(account1.address);
+      expect(await permaBull.treasuryAddress()).to.be.equal(account1.address);
     });
   });
 });
