@@ -9,15 +9,22 @@ describe("Lock", function () {
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
   async function deployBurnKing() {
-    const [owner, otherAccount] = await ethers.getSigners();
+    const [owner, account1, account2, treasury] = await ethers.getSigners();
 
     const PermaBull: PermaBull__factory = await ethers.getContractFactory(
       "PermaBull"
     );
 
-    const permaBull: PermaBull = await PermaBull.deploy(owner.address);
+    const permaBull: PermaBull = await PermaBull.deploy(treasury.address);
 
-    return { permaBull, owner, otherAccount };
+    return { permaBull, owner, account1, account2, treasury };
+  }
+
+  async function distributeTokens(permaBull: PermaBull) {
+    const [account1, account2] = await ethers.getSigners();
+    const transferAmt = ethers.utils.parseUnits("1000", 9);
+    await permaBull.transfer(account1.address, transferAmt);
+    await permaBull.transfer(account2.address, transferAmt);
   }
 
   describe("Deployment", function () {
@@ -31,9 +38,32 @@ describe("Lock", function () {
       expect(await permaBull.uniswapV2Router()).to.be.equal(UniswapV2Router);
     });
     it("should check if treasury address is correct", async function () {
-      const [owner] = await ethers.getSigners();
+      const [, , , treasury] = await ethers.getSigners();
       const { permaBull } = await loadFixture(deployBurnKing);
-      expect(await permaBull.treasuryAddress()).to.be.equal(owner.address);
+      expect(await permaBull.treasuryAddress()).to.be.equal(treasury.address);
+    });
+  });
+
+  describe("Tax", function () {
+    it("should check if treasury receives tax", async function () {
+      const { permaBull, owner, account1, account2 } = await loadFixture(
+        deployBurnKing
+      );
+      const transferAmt = ethers.utils.parseUnits("100", 9);
+
+      await distributeTokens(permaBull);
+
+      await permaBull.connect(account1).transfer(account2.address, transferAmt);
+      const treasuryBalance = await permaBull.balanceOf(
+        await permaBull.treasuryAddress()
+      );
+      console.log(ethers.utils.formatUnits(treasuryBalance, 9), "treasuryTax");
+
+      const account2Balance = await permaBull.balanceOf(await account2.address);
+      console.log(account2Balance);
+      // expect(treasuryBalance).to.be.equal(
+      //   transferAmt.mul(await permaBull._treasuryFee()).div(100)
+      // );
     });
   });
 });

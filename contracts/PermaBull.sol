@@ -896,6 +896,8 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
+import "hardhat/console.sol";
+
 contract PermaBull is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
@@ -925,7 +927,7 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _liquidityFee = 6;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
-    uint256 public _treasuryFee = 6;
+    uint256 public _treasuryFee = 1;
     uint256 private _previousTreasuryFee = _treasuryFee;
 
     uint256 public _burnFee = 3;
@@ -1342,6 +1344,7 @@ contract PermaBull is Context, IERC20, Ownable {
         _taxFee = _previousTaxFee;
         _liquidityFee = _previousLiquidityFee;
         _burnFee = _previousBurnFee;
+        _treasuryFee = _previousTreasuryFee;
     }
 
     function isExcludedFromFee(address account) public view returns (bool) {
@@ -1365,6 +1368,7 @@ contract PermaBull is Context, IERC20, Ownable {
         address to,
         uint256 amount
     ) private {
+        console.log("IN Transfer()");
         require(from != address(0), "ERC20: transfer from the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
         if (from != owner() && to != owner())
@@ -1477,6 +1481,10 @@ contract PermaBull is Context, IERC20, Ownable {
         uint256 treasuryAmt = amount.mul(_treasuryFee).div(100);
         uint256 feeAmt = burnAmt.add(treasuryAmt);
 
+        console.log(burnAmt, "burnAmt");
+        console.log(treasuryAmt, "treasuryAmt");
+        console.log(feeAmt, "feeAmt");
+
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
             _transferFromExcluded(sender, recipient, amount.sub(feeAmt));
         } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
@@ -1493,7 +1501,7 @@ contract PermaBull is Context, IERC20, Ownable {
         _liquidityFee = 0;
 
         _transferStandard(sender, address(0), burnAmt);
-        _transferStandard(sender, address(0), treasuryAmt);
+        _transferStandard(sender, treasuryAddress, treasuryAmt);
 
         _taxFee = _previousTaxFee;
         _liquidityFee = _previousLiquidityFee;
