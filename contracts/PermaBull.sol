@@ -925,6 +925,9 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _liquidityFee = 6;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
+    uint256 public _treasuryFee = 6;
+    uint256 private _previousTreasuryFee = _treasuryFee;
+
     uint256 public _burnFee = 3;
     uint256 private _previousBurnFee = _burnFee;
 
