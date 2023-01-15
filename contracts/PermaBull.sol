@@ -1364,14 +1364,14 @@ contract PermaBull is Context, IERC20, Ownable {
             _soldToday[from] = 0;
         }
 
-        uint256 dailySellLimit = amount.mul(_dailySellLimit).div(100);
+        uint256 dailySellLimitAmt = amount.mul(_dailySellLimit).div(100);
 
         uint256 soldAmt = _soldToday[from];
 
         uint256 amountAllowedToSell = amount.add(soldAmt);
 
         require(
-            amountAllowedToSell <= dailySellLimit,
+            amountAllowedToSell <= dailySellLimitAmt,
             "You have reached your daily sell limit"
         );
         // is the token balance of this contract address over the min number of
