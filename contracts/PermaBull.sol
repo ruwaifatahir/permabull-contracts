@@ -1361,27 +1361,31 @@ contract PermaBull is Context, IERC20, Ownable {
                 "Transfer amount exceeds the maxTxAmount."
             );
 
-        uint256 lastSellTime = _lastSellTime[from] = block.timestamp;
+        //If account is excluded, remove sending limits
+        if (!_isExcludedFromFee[from]) {
+            uint256 lastSellTime = _lastSellTime[from] = block.timestamp;
 
-        // If he last transfered more than 1 day ago, reset the amount sold today
-        if (lastSellTime + 1 days < block.timestamp) {
-            _soldToday[from] = 0;
+            // If he last transfered more than 1 day ago, reset the amount sold today
+            if (lastSellTime + 1 days < block.timestamp) {
+                _soldToday[from] = 0;
+            }
+
+            // Calculate amount which caller can send daily
+            uint256 dailySellLimitAmt = amount.mul(_dailySellLimit).div(100);
+
+            // Get amount sold today
+            uint256 soldAmt = _soldToday[from];
+
+            // Calculate amount which wants to sell + amount which was sold today
+            uint256 amountAllowedToSell = amount.add(soldAmt);
+
+            //Revert if amount which wants to sell + amount which was sold today is greater than daily sell limit amount
+            require(
+                amountAllowedToSell <= dailySellLimitAmt,
+                "You have reached your daily sell limit"
+            );
         }
 
-        // Calculate amount which caller can send daily
-        uint256 dailySellLimitAmt = amount.mul(_dailySellLimit).div(100);
-
-        // Get amount sold today
-        uint256 soldAmt = _soldToday[from];
-
-        // Calculate amount which wants to sell + amount which was sold today
-        uint256 amountAllowedToSell = amount.add(soldAmt);
-
-        //Revert if amount which wants to sell + amount which was sold today is greater than daily sell limit amount
-        require(
-            amountAllowedToSell <= dailySellLimitAmt,
-            "You have reached your daily sell limit"
-        );
         // is the token balance of this contract address over the min number of
         // tokens that we need to initiate a swap + liquidity lock?
         // also, don't get caught in a circular liquidity event.
