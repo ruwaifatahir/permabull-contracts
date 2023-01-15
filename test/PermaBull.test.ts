@@ -15,7 +15,7 @@ describe("Lock", function () {
       "PermaBull"
     );
 
-    const permaBull: PermaBull = await PermaBull.deploy();
+    const permaBull: PermaBull = await PermaBull.deploy(owner.address);
 
     return { permaBull, owner, otherAccount };
   }
@@ -29,6 +29,11 @@ describe("Lock", function () {
       const { permaBull } = await loadFixture(deployBurnKing);
       const UniswapV2Router = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45";
       expect(await permaBull.uniswapV2Router()).to.be.equal(UniswapV2Router);
+    });
+    it("should check if treasury address is correct", async function () {
+      const [owner] = await ethers.getSigners();
+      const { permaBull } = await loadFixture(deployBurnKing);
+      expect(await permaBull.treasuryAddress()).to.be.equal(owner.address);
     });
   });
 });
