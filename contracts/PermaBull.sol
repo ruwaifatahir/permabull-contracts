@@ -1198,6 +1198,10 @@ contract PermaBull is Context, IERC20, Ownable {
         emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
 
+    function setTreasuryAddress(address _treasuryAddress) public onlyOwner {
+        treasuryAddress = _treasuryAddress;
+    }
+
     //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
 
