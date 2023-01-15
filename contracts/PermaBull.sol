@@ -940,6 +940,8 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _maxTxAmount = 5000 * 10**6 * 10**9;
     uint256 private numTokensSellToAddToLiquidity = 500 * 10**6 * 10**9;
 
+    address public treasuryAddress;
+
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(
@@ -954,7 +956,7 @@ contract PermaBull is Context, IERC20, Ownable {
         inSwapAndLiquify = false;
     }
 
-    constructor() public {
+    constructor(address _treasuryAddress) public {
         _rOwned[_msgSender()] = _rTotal;
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
@@ -971,6 +973,8 @@ contract PermaBull is Context, IERC20, Ownable {
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
+
+        treasuryAddress = _treasuryAddress;
 
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
