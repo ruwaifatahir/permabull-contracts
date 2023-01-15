@@ -908,7 +908,9 @@ contract PermaBull is Context, IERC20, Ownable {
 
     mapping(address => bool) private _isExcluded;
 
-    mapping(address => uint256) private _sDaily;
+    mapping(address => uint256) private _soldToday;
+
+    mapping(address => uint256) private _lastSellTime;
 
     address[] private _excluded;
 
@@ -1390,7 +1392,14 @@ contract PermaBull is Context, IERC20, Ownable {
         _tokenTransfer(from, to, amount, takeFee);
 
         //Update
+
+        _soldToday[from] = amount;
+        _lastSellTime[from] = block.timestamp;
     }
+
+//    function checkLimit(from) public view returns(uint) {
+
+//    }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
