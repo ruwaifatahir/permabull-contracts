@@ -937,6 +937,8 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 public _maxTxAmount = 5000 * 10**6 * 10**9;
     uint256 private numTokensSellToAddToLiquidity = 500 * 10**6 * 10**9;
 
+    uint256 public dailyLimitPerc = 1;
+
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(
@@ -1384,6 +1386,8 @@ contract PermaBull is Context, IERC20, Ownable {
 
         //transfer amount, it will take tax, burn, liquidity fee
         _tokenTransfer(from, to, amount, takeFee);
+
+        //Update
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
