@@ -1385,7 +1385,7 @@ contract PermaBull is Context, IERC20, Ownable {
                 "Transfer amount exceeds the maxTxAmount."
             );
 
-        //If account is excluded, remove sending limits
+        //If account is excluded, apply sending limits
         if (!_isExcludedFromFee[from]) {
             uint256 lastSellTime = _lastSellTime[from] = block.timestamp;
 

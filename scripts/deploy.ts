@@ -1,9 +1,11 @@
 import { ethers } from "hardhat";
-import { BKP, BKP__factory } from "../typechain-types";
+import { PermaBull, PermaBull__factory } from "../typechain-types";
 
 async function main() {
-  const BKP: BKP__factory = await ethers.getContractFactory("BKP");
-  const bkp: BKP = await BKP.deploy();
+  const [, treasury] = await ethers.getSigners();
+
+  const BKP: PermaBull__factory = await ethers.getContractFactory("PermaBull");
+  const bkp: PermaBull = await BKP.deploy(treasury.address);
 
   await bkp.deployed();
 
