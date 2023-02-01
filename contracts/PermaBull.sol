@@ -921,20 +921,20 @@ contract PermaBull is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name = "Burn King Protocol";
-    string private _symbol = "BKP";
+    string private _name = "PermaBull";
+    string private _symbol = "PMB";
     uint8 private _decimals = 9;
 
-    uint256 public _taxFee = 1;
-    uint256 private _previousTaxFee = _taxFee;
+    uint256 public _reflectionFee = 3;
+    uint256 private _previousReflectionFee = _reflectionFee;
 
-    uint256 public _liquidityFee = 6;
+    uint256 public _liquidityFee = 3;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
-    uint256 public _treasuryFee = 1;
+    uint256 public _treasuryFee = 2;
     uint256 private _previousTreasuryFee = _treasuryFee;
 
-    uint256 public _burnFee = 3;
+    uint256 public _burnFee = 2;
     uint256 private _previousBurnFee = _burnFee;
 
     IUniswapV2Router02 public uniswapV2Router;
@@ -1180,8 +1180,8 @@ contract PermaBull is Context, IERC20, Ownable {
         _isExcludedFromFee[account] = false;
     }
 
-    function setTaxFeePercent(uint256 taxFee) external onlyOwner {
-        _taxFee = taxFee;
+    function setTaxFeePercent(uint256 reflectionFee) external onlyOwner {
+        _reflectionFee = reflectionFee;
     }
 
     function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner {
@@ -1319,7 +1319,7 @@ contract PermaBull is Context, IERC20, Ownable {
     }
 
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(_taxFee).div(10**2);
+        return _amount.mul(_reflectionFee).div(10**2);
     }
 
     function calculateLiquidityFee(uint256 _amount)
@@ -1332,25 +1332,25 @@ contract PermaBull is Context, IERC20, Ownable {
 
     function removeAllFee() private {
         if (
-            _taxFee == 0 &&
+            _reflectionFee == 0 &&
             _liquidityFee == 0 &&
             _burnFee == 0 &&
             _treasuryFee == 0
         ) return;
 
-        _previousTaxFee = _taxFee;
+        _previousReflectionFee = _reflectionFee;
         _previousLiquidityFee = _liquidityFee;
         _previousBurnFee = _burnFee;
         _previousTreasuryFee = _treasuryFee;
 
-        _taxFee = 0;
+        _reflectionFee = 0;
         _liquidityFee = 0;
         _burnFee = 0;
         _treasuryFee = 0;
     }
 
     function restoreAllFee() private {
-        _taxFee = _previousTaxFee;
+        _reflectionFee = _previousReflectionFee;
         _liquidityFee = _previousLiquidityFee;
         _burnFee = _previousBurnFee;
         _treasuryFee = _previousTreasuryFee;
@@ -1538,13 +1538,13 @@ contract PermaBull is Context, IERC20, Ownable {
             _transferStandard(sender, recipient, amount.sub(feeAmt));
         }
 
-        _taxFee = 0;
+        _reflectionFee = 0;
         _liquidityFee = 0;
 
         _transferStandard(sender, address(0), burnAmt);
         _transferStandard(sender, treasuryAddress, treasuryAmt);
 
-        _taxFee = _previousTaxFee;
+        _reflectionFee = _previousReflectionFee;
         _liquidityFee = _previousLiquidityFee;
 
         if (!takeFee) restoreAllFee();
