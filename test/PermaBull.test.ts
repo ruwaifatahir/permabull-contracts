@@ -9,7 +9,8 @@ describe("Lock", function () {
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
   async function deployBurnKing() {
-    const [owner, account1, account2, treasury] = await ethers.getSigners();
+    const [owner, account1, account2, treasury, account3, account4, account5] =
+      await ethers.getSigners();
 
     const PermaBull: PermaBull__factory = await ethers.getContractFactory(
       "PermaBull"
@@ -17,12 +18,21 @@ describe("Lock", function () {
 
     const permaBull: PermaBull = await PermaBull.deploy(treasury.address);
 
-    return { permaBull, owner, account1, account2, treasury };
+    return {
+      permaBull,
+      owner,
+      account1,
+      account2,
+      treasury,
+      account3,
+      account4,
+      account5,
+    };
   }
 
   async function distributeTokens(permaBull: PermaBull) {
-    const [account1, account2] = await ethers.getSigners();
-    const transferAmt = ethers.utils.parseUnits("1000", 9);
+    const [, account1, account2] = await ethers.getSigners();
+    const transferAmt = ethers.utils.parseUnits("100000", 9);
     await permaBull.transfer(account1.address, transferAmt);
     await permaBull.transfer(account2.address, transferAmt);
   }
@@ -114,6 +124,63 @@ describe("Lock", function () {
       await expect(
         permaBull.connect(account1).transfer(account2.address, transferAmt)
       ).to.be.revertedWith("You have reached your daily sell limit");
+    });
+  });
+
+  describe.only("Testing", () => {
+    it("should test", async function () {
+      const {
+        permaBull,
+        owner,
+        account1,
+        account2,
+        account3,
+        account4,
+        account5,
+      } = await loadFixture(deployBurnKing);
+      const transferAmt = ethers.utils.parseUnits("100", 9);
+
+      await distributeTokens(permaBull);
+
+      await permaBull.connect(account1).transfer(account3.address, transferAmt);
+      await permaBull.connect(account1).transfer(account4.address, transferAmt);
+      await permaBull.connect(account1).transfer(account5.address, transferAmt);
+
+      console.log(
+        ethers.utils.formatUnits(
+          await permaBull.balanceOf(account1.address),
+          9
+        ),
+        "account2Balance"
+      );
+      console.log(
+        ethers.utils.formatUnits(
+          await permaBull.balanceOf(account2.address),
+          9
+        ),
+        "account2Balance"
+      );
+      console.log(
+        ethers.utils.formatUnits(
+          await permaBull.balanceOf(account3.address),
+          9
+        ),
+        "account3Balance"
+      );
+      console.log(
+        ethers.utils.formatUnits(
+          await permaBull.balanceOf(account4.address),
+          9
+        ),
+        "account4Balance"
+      );
+      console.log(
+        ethers.utils.formatUnits(
+          await permaBull.balanceOf(account5.address),
+          9
+        ),
+        "account5Balance"
+      );
     });
   });
 });
