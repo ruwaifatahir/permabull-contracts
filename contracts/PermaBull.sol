@@ -1527,15 +1527,15 @@ contract PermaBull is Context, IERC20, Ownable {
         console.log(feeAmt, "feeAmt");
 
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
-            _transferFromExcluded(sender, recipient, amount.sub(feeAmt));
+            _transferFromExcluded(sender, recipient, amount);
         } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
-            _transferToExcluded(sender, recipient, amount.sub(feeAmt));
+            _transferToExcluded(sender, recipient, amount);
         } else if (!_isExcluded[sender] && !_isExcluded[recipient]) {
-            _transferStandard(sender, recipient, amount.sub(feeAmt));
+            _transferStandard(sender, recipient, amount);
         } else if (_isExcluded[sender] && _isExcluded[recipient]) {
-            _transferBothExcluded(sender, recipient, amount.sub(feeAmt));
+            _transferBothExcluded(sender, recipient, amount);
         } else {
-            _transferStandard(sender, recipient, amount.sub(feeAmt));
+            _transferStandard(sender, recipient, amount);
         }
 
         _reflectionFee = 0;
@@ -1563,6 +1563,8 @@ contract PermaBull is Context, IERC20, Ownable {
             uint256 tFee,
             uint256 tLiquidity
         ) = _getValues(tAmount);
+        console.log(rAmount / _getRate(), "rAmount");
+        console.log(rTransferAmount, "rTransferAmount");
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
         _takeLiquidity(tLiquidity);
